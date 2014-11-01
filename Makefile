@@ -94,6 +94,11 @@ OBJS += $(PWD)/CORTEX_M4F_STM32F4/traffic/move_car.o
 OBJS += $(PWD)/CORTEX_M4F_STM32F4/traffic/traffic.o
 CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4/traffic/include
 
+# bulletTime
+OBJS += $(PWD)/CORTEX_M4F_STM32F4/bulletTime/bulletTime.o
+OBJS += $(PWD)/CORTEX_M4F_STM32F4/bulletTime/ball.o
+CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4/bulletTime/include
+
 CFLAGS += -DUSE_STDPERIPH_DRIVER
 CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4 \
 	  -I $(PWD)/include \
