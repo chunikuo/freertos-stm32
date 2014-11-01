@@ -91,6 +91,7 @@ OBJS += \
 # Traffic
 OBJS += $(PWD)/CORTEX_M4F_STM32F4/traffic/draw_graph.o
 OBJS += $(PWD)/CORTEX_M4F_STM32F4/traffic/move_car.o
+OBJS += $(PWD)/CORTEX_M4F_STM32F4/traffic/traffic.o
 CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4/traffic/include
 
 CFLAGS += -DUSE_STDPERIPH_DRIVER
