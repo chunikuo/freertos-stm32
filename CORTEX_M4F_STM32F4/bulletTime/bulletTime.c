@@ -26,6 +26,7 @@ static TP_STATE* TP_State;
 
 // Ball
 Ball Bullet[BulletNum];
+Ball LayerBuffer[2][BulletNum + 1];
 
 uint16_t ballSize = BallRADIUS;
 float ballX = ( LCD_PIXEL_WIDTH - 5 ) / 2;
@@ -47,6 +48,16 @@ void Init()
                 Bullet[i].TextColor = LCD_COLOR_YELLOW;
                 Bullet[i].Radius = BulletRADIUS;
         }
+
+	for(int i = 0; i < 2; i++)
+	{
+		for(int j = 0; j < BulletNum + 1; j++)
+		{
+			LayerBuffer[i][j].XPos = LayerBuffer[i][j].YPos = -1.0f;
+			LayerBuffer[i][j].TextColor = j == 0 ? LCD_COLOR_WHITE : LCD_COLOR_YELLOW;
+			LayerBuffer[i][j].Radius = j == 0 ? BallRADIUS : BulletRADIUS;
+		}
+	}
 
         srand(rand());
         BasicSpeed = 2.0f;
@@ -171,16 +182,59 @@ void BulletEventTask()
                         	}
                 	}
 		}
+		vTaskDelay( 10 );
         }
 
 }
 
 void DrawBallEventTask()
 {
+	bool isForeGround = true;
+
+	LCD_SetLayer(LCD_BACKGROUND_LAYER);
+	LCD_Clear( LCD_COLOR_BLACK );
+
+	LCD_SetLayer( LCD_FOREGROUND_LAYER );
 	while (1)
 	{
-		LCD_SetTextColor( LCD_COLOR_WHITE );
-		LCD_DrawFullCircle( (int16_t)ballX, (int16_t)ballY, ballSize);
+		if (isForeGround)
+		{			
+			LCD_SetLayer( LCD_FOREGROUND_LAYER );
+			
+			if ( LayerBuffer[0][0].XPos != ballX || LayerBuffer[0][0].YPos != ballY )
+			{
+				if ( LayerBuffer[0][0].XPos >= 0 || LayerBuffer[0][0].YPos >= 0 )
+					EraseBall(&LayerBuffer[0][0]);
+
+				LayerBuffer[0][0].XPos = ballX;
+				LayerBuffer[0][0].YPos = ballY;
+
+				DrawBall(&LayerBuffer[0][0]);
+			}			
+			
+			LCD_SetTransparency(0xFF);		
+		}
+		else
+		{
+			LCD_SetLayer( LCD_BACKGROUND_LAYER );
+
+			if ( LayerBuffer[1][0].XPos != ballX || LayerBuffer[1][0].YPos != ballY )
+			{
+				if ( LayerBuffer[1][0].XPos >= 0 || LayerBuffer[1][0].YPos >= 0 )
+					EraseBall(&LayerBuffer[1][0]);
+
+				LayerBuffer[1][0].XPos = ballX;
+				LayerBuffer[1][0].YPos = ballY;
+
+				DrawBall(&LayerBuffer[1][0]);
+			}
+			
+			LCD_SetLayer( LCD_FOREGROUND_LAYER );
+			LCD_SetTransparency(0x00);		
+		}	
+		
+		isForeGround = !isForeGround;
+		vTaskDelay(10);
 	}	
 }
 
@@ -188,7 +242,7 @@ void StartBulletTime()
 {
 	Init();
 
-	xTaskCreate( BulletEventTask, (char*) "Bullet Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
+	//xTaskCreate( BulletEventTask, (char*) "Bullet Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         xTaskCreate( MainBallEventTask, (char*) "MainBall Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         xTaskCreate( DrawBallEventTask, (char*) "DrawBall Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         //xTaskCreate( GameEventTask3, (signed char*) "GameEventTask3", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
