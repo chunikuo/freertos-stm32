@@ -25,12 +25,10 @@
 static TP_STATE* TP_State;
 
 // Ball
-Ball Bullet[BulletNum];
+Ball BObj[BulletNum + 1];
 Ball LayerBuffer[2][BulletNum + 1];
 
 uint16_t ballSize = BallRADIUS;
-float ballX = ( LCD_PIXEL_WIDTH - 5 ) / 2;
-float ballY = ( LCD_PIXEL_HEIGHT - 5 ) / 2;
 
 
 float BasicSpeed = 2.0f;
@@ -39,20 +37,18 @@ bool isCollision = false;
 
 void Init()
 {
-	for(int i = 0; i < BulletNum; i++)
-        {
-                if (Bullet[i].XPos > 0 && Bullet[i].YPos > 0)
-                        EraseBall(&Bullet[i]);
-
-                Bullet[i].XPos = Bullet[i].YPos = -1.0f;
-                Bullet[i].TextColor = LCD_COLOR_YELLOW;
-                Bullet[i].Radius = BulletRADIUS;
-        }
-
 	for(int i = 0; i < 2; i++)
 	{
 		for(int j = 0; j < BulletNum + 1; j++)
 		{
+			if (i)
+			{
+	                	BObj[j].XPos = j == 0 ? ( LCD_PIXEL_WIDTH - 5 ) / 2 : -1.0f;
+				BObj[j].YPos = j == 0 ? ( LCD_PIXEL_HEIGHT - 5 ) / 2 : -1.0f;
+                		BObj[j].TextColor = j == 0 ? LCD_COLOR_WHITE : LCD_COLOR_YELLOW;
+                		BObj[j].Radius = j == 0 ? BallRADIUS : BulletRADIUS;
+			}
+
 			LayerBuffer[i][j].XPos = LayerBuffer[i][j].YPos = -1.0f;
 			LayerBuffer[i][j].TextColor = j == 0 ? LCD_COLOR_WHITE : LCD_COLOR_YELLOW;
 			LayerBuffer[i][j].Radius = j == 0 ? BallRADIUS : BulletRADIUS;
@@ -74,18 +70,18 @@ void MainBallEventTask()
 
         	if (TP_State->TouchDetected && !isCollision)
         	{
-                	int16_t XLen = ballX - TP_State->X;
-	                int16_t YLen = ballY - TP_State->Y;
+                	int16_t XLen = BObj[0].XPos - TP_State->X;
+	                int16_t YLen = BObj[0].YPos - TP_State->Y;
         	        float r = sqrtf(pow(XLen, 2) + pow(YLen, 2)) / 10.0;
 
                 	if (r >= 1.0)
                 	{
-                        	ballX -= (XLen / r);
-	                        ballY -= (YLen / r);
+                        	BObj[0].XPos -= (XLen / r);
+	                        BObj[0].YPos -= (YLen / r);
         	        }
                 	else {
-                        	ballX = TP_State->X;
-	                        ballY = TP_State->Y;
+                        	BObj[0].XPos = TP_State->X;
+	                        BObj[0].YPos = TP_State->Y;
         	        }
         	}
 		
@@ -95,8 +91,8 @@ void MainBallEventTask()
 
 void CheckCollision(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1)
 {
-        float d1 = sqrtf(pow(X0 - ballX, 2) + pow(Y0 - ballY, 2));
-        float d2 = sqrtf(pow(X1 - ballX, 2) + pow(Y1 - ballY, 2));
+        float d1 = sqrtf(pow(X0 - BObj[0].XPos, 2) + pow(Y0 - BObj[0].YPos, 2));
+        float d2 = sqrtf(pow(X1 - BObj[0].XPos, 2) + pow(Y1 - BObj[0].YPos, 2));
 
         isCollision = !((d1 - (BulletRADIUS + BallRADIUS) > 0) && (d2 - (BulletRADIUS + BallRADIUS) > 0));
 }
@@ -107,9 +103,9 @@ void BulletEventTask()
 	{
 	        if (isCollision)        return;
 
-	        for(int i = 0; i < BulletNum; i++)
+	        for(int i = 1; i <= BulletNum; i++)
         	{
-                	if (Bullet[i].XPos < 0 || Bullet[i].YPos < 0)
+                	if (BObj[i].XPos < 0 || BObj[i].YPos < 0)
 	                {
         	                uint16_t XPos, YPos;
                 	        switch(rand() % 4)
@@ -132,11 +128,11 @@ void BulletEventTask()
                         	                break;
 	                        }
 
-        	                Bullet[i].XPos = XPos;
-                	        Bullet[i].YPos = YPos;
+        	                BObj[i].XPos = XPos;
+                	        BObj[i].YPos = YPos;
 
-                        	int16_t TargetXPos = rand() % TargetRange - (TargetRange / 2) + ballX;
-	                        int16_t TargetYPos = rand() % TargetRange - (TargetRange / 2) + ballY;
+                        	int16_t TargetXPos = rand() % TargetRange - (TargetRange / 2) + BObj[0].XPos;
+	                        int16_t TargetYPos = rand() % TargetRange - (TargetRange / 2) + BObj[0].YPos;
 
         	                int16_t XLen = XPos - TargetXPos;
 	                        int16_t YLen = YPos - TargetYPos;
@@ -144,47 +140,66 @@ void BulletEventTask()
 
 	                        if (r >= 1.0)
         	                {
-                	                Bullet[i].XSpeed = (XLen / r);
-	                                Bullet[i].YSpeed = (YLen / r);
+                	                BObj[i].XSpeed = (XLen / r);
+	                                BObj[i].YSpeed = (YLen / r);
         	                }
                 	        else
 	                        {
-        	                        Bullet[i].XSpeed = XLen;
-                	                Bullet[i].YSpeed = YLen;
+        	                        BObj[i].XSpeed = XLen;
+                	                BObj[i].YSpeed = YLen;
                         	}
 
-	                        DrawBall(&Bullet[i]);
+	                        //DrawBall(&BObj[i]);
         	                BasicSpeed += 0.01;
                 	}
 	                else
         	        {
-                	        uint16_t cX = (uint16_t)Bullet[i].XPos, cY = (uint16_t)Bullet[i].YPos;
-	                        Ball PreBullet = Bullet[i];
+                	        uint16_t cX = (uint16_t)BObj[i].XPos, cY = (uint16_t)BObj[i].YPos;
+	                        //Ball PreBullet = BObj[i];
 
-        	                Bullet[i].XPos -= Bullet[i].XSpeed;
-                	        Bullet[i].YPos -= Bullet[i].YSpeed;
+        	                BObj[i].XPos -= BObj[i].XSpeed;
+                	        BObj[i].YPos -= BObj[i].YSpeed;
 
-	                        if ((Bullet[i].XPos > BulletRADIUS && Bullet[i].XPos < RANGEWIDTH + BulletRADIUS) &&
-        	                    (Bullet[i].YPos > BulletRADIUS && Bullet[i].YPos < RANGEHEIGHT + BulletRADIUS))
+	                        if ((BObj[i].XPos > BulletRADIUS && BObj[i].XPos < RANGEWIDTH + BulletRADIUS) &&
+        	                    (BObj[i].YPos > BulletRADIUS && BObj[i].YPos < RANGEHEIGHT + BulletRADIUS))
                 	        {
 
-	                                CheckCollision(cX, cY, (uint16_t)Bullet[i].XPos, (uint16_t)Bullet[i].YPos);
+	                                CheckCollision(cX, cY, (uint16_t)BObj[i].XPos, (uint16_t)BObj[i].YPos);
 	
-        	                        EraseBall(&PreBullet);
-                	                DrawBall(&Bullet[i]);
+        	                        //EraseBall(&PreBullet);
+                	                //DrawBall(&BObj[i]);
 
                         	        if(isCollision) break;
 	                        }
         	                else
                 	        {
-                        	        EraseBall(&PreBullet);
-                                	Bullet[i].XPos = Bullet[i].YPos = -1.0f;
+                        	        //EraseBall(&PreBullet);
+                                	BObj[i].XPos = BObj[i].YPos = -1.0f;
                         	}
                 	}
 		}
 		vTaskDelay( 10 );
         }
 
+}
+
+void UpdateLayerInfo(int index)
+{
+	for( int i = 0; i < BulletNum + 1; i++)
+	{	
+		if ( LayerBuffer[index][i].XPos != BObj[i].XPos || LayerBuffer[index][i].YPos != BObj[i].YPos )
+		{
+			if ( LayerBuffer[index][i].XPos >= 0 || LayerBuffer[index][i].YPos >= 0 )
+				EraseBall(&LayerBuffer[index][i]);
+
+			LayerBuffer[index][i].XPos = BObj[i].XPos;
+			LayerBuffer[index][i].YPos = BObj[i].YPos;
+
+			
+			if ( LayerBuffer[index][i].XPos >= 0 && LayerBuffer[index][i].YPos >= 0 )
+				DrawBall(&LayerBuffer[index][i]);
+		}			
+	}
 }
 
 void DrawBallEventTask()
@@ -199,50 +214,29 @@ void DrawBallEventTask()
 	{
 		if (isForeGround)
 		{			
-			LCD_SetLayer( LCD_FOREGROUND_LAYER );
-			
-			if ( LayerBuffer[0][0].XPos != ballX || LayerBuffer[0][0].YPos != ballY )
-			{
-				if ( LayerBuffer[0][0].XPos >= 0 || LayerBuffer[0][0].YPos >= 0 )
-					EraseBall(&LayerBuffer[0][0]);
-
-				LayerBuffer[0][0].XPos = ballX;
-				LayerBuffer[0][0].YPos = ballY;
-
-				DrawBall(&LayerBuffer[0][0]);
-			}			
-			
+			UpdateLayerInfo(0);
 			LCD_SetTransparency(0xFF);		
 		}
 		else
 		{
 			LCD_SetLayer( LCD_BACKGROUND_LAYER );
-
-			if ( LayerBuffer[1][0].XPos != ballX || LayerBuffer[1][0].YPos != ballY )
-			{
-				if ( LayerBuffer[1][0].XPos >= 0 || LayerBuffer[1][0].YPos >= 0 )
-					EraseBall(&LayerBuffer[1][0]);
-
-				LayerBuffer[1][0].XPos = ballX;
-				LayerBuffer[1][0].YPos = ballY;
-
-				DrawBall(&LayerBuffer[1][0]);
-			}
+			UpdateLayerInfo(1);
 			
 			LCD_SetLayer( LCD_FOREGROUND_LAYER );
 			LCD_SetTransparency(0x00);		
 		}	
 		
 		isForeGround = !isForeGround;
-		vTaskDelay(10);
+		vTaskDelay(5);
 	}	
 }
+
 
 void StartBulletTime()
 {
 	Init();
 
-	//xTaskCreate( BulletEventTask, (char*) "Bullet Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
+	xTaskCreate( BulletEventTask, (char*) "Bullet Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         xTaskCreate( MainBallEventTask, (char*) "MainBall Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         xTaskCreate( DrawBallEventTask, (char*) "DrawBall Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         //xTaskCreate( GameEventTask3, (signed char*) "GameEventTask3", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
