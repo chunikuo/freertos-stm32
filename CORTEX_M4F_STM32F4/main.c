@@ -32,7 +32,7 @@
 #include <string.h>
 
 #include "main.h"
-#include "traffic.h"
+#include "menu.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -62,6 +62,6 @@ int main(void)
 {
 	prvInit();
 	
-	StartTraffic();
+	StartBulletTime();
 }
 
