@@ -31,6 +31,7 @@ LDFLAGS += -L $(call get_library_path,libgcc.a)
 # Basic configurations
 CFLAGS += -g -std=c99
 CFLAGS += -Wall
+CFLAGS += -DUSER_NAME=\"$(USER)\"
 
 # Optimizations
 CFLAGS += -g -std=c99 -O3 -ffast-math
@@ -98,6 +99,10 @@ CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4/traffic/include
 OBJS += $(PWD)/CORTEX_M4F_STM32F4/bulletTime/bulletTime.o
 OBJS += $(PWD)/CORTEX_M4F_STM32F4/bulletTime/ball.o
 CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4/bulletTime/include
+
+# Menu
+#OBJS += $(PWD)/CORTEX_M4F_STM32F4/menu/menu.o
+#CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4/menu/include
 
 CFLAGS += -DUSE_STDPERIPH_DRIVER
 CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F4 \
