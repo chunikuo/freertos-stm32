@@ -10,6 +10,7 @@
 #include "task.h"
 #include "stm32f429i_discovery_lcd.h"
 #include "stm32f429i_discovery_ioe.h"
+#include "stm32f4xx_rng.h"
 
 #define TargetRange 100
 
@@ -264,7 +265,6 @@ void ButtonEventTask()
                 if( STM_EVAL_PBGetState( BUTTON_USER ) ){
 
 			isCollision = true;
-			vTaskDelay(10);
 			Init();
                 }
         }
@@ -279,7 +279,7 @@ void StartBulletTime()
 	xTaskCreate( BulletEventTask, (char*) "Bullet Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         xTaskCreate( MainBallEventTask, (char*) "MainBall Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
         xTaskCreate( DrawBallEventTask, (char*) "DrawBall Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
-        //xTaskCreate( ButtonEventTask, (char*) "Button Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
+        xTaskCreate( ButtonEventTask, (char*) "Button Event Task", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
 
         //Call Scheduler
         vTaskStartScheduler();
